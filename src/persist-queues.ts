@@ -1,8 +1,9 @@
 import * as fs from 'fs';
+import { QueueStructure } from './queue-structure.interface';
 
 export class QueuePersistance {
     private _queueDefinitions: string[] = [];
-    private _queuePersistance: any[] = [];
+    private _queuePersistance: QueueStructure[] = [];
 
     constructor() {
         this.createQueueDefinitionArray();
@@ -17,6 +18,18 @@ export class QueuePersistance {
         return this._queueDefinitions;
     }
 
+    public getQueueByName(name: string): QueueStructure | undefined {
+        return this._queuePersistance.find(x => x.name === name);
+    }
+
+    public pushMessageToQueue(name: string, message: string) {
+        const queue = this.getQueueByName(name);
+        if (queue) {
+            this.writeMessage(name, message);
+            queue.messages.push(message);
+        }
+    }
+
     private createQueueDefinitionArray() {
         console.log('...loading queue definition');
         const body = this.readFile('queues');
@@ -29,14 +42,17 @@ export class QueuePersistance {
         }
     }
 
-
     private createQueuePersistance() {
         console.log('...loading queue persistance');
         if (this._queueDefinitions.length > 0) {
             this._queueDefinitions.forEach((def) => {
                 const body = this.readFile(def);
                 if (body) {
-                    this._queuePersistance.push(body.toString('utf8').split('\r\n'));
+                    this._queuePersistance.push({
+                        name: def,
+                        messages: body.toString('utf8').split('\r\n'),
+                        timestamp: Date.now()
+                    });
                 } else {
                     console.log('...loading queue persistance failed');
                     process.exit(2);
@@ -61,5 +77,9 @@ export class QueuePersistance {
         } catch (error) {
             console.log(error);
         }
+    }
+
+    private writeMessage(filename: string, message: string) {
+        fs.appendFileSync(filename, `${message}\r\n`);
     }
 }
