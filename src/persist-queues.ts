@@ -1,7 +1,8 @@
 import * as fs from 'fs';
+import * as stream from 'stream';
 import { QueueStructure } from './queue-structure.interface';
 
-export class QueuePersistance {
+export class QueuePersistence {
     private _queueDefinitions: string[] = [];
     private _queuePersistance: QueueStructure[] = [];
 
@@ -18,8 +19,21 @@ export class QueuePersistance {
         return this._queueDefinitions;
     }
 
-    public getQueueByName(name: string): QueueStructure | undefined {
-        return this._queuePersistance.find(x => x.name === name);
+    private getQueueByName(name: string): QueueStructure | undefined {
+        let queue = this._queuePersistance.find(x => x.name === name);
+        if (!queue) {
+            const body = this.readFile(name);
+            if (body) {
+                queue = {
+                    name: name,
+                    messages: [],
+                    timestamp: Date.now()
+                }
+                this._queuePersistance.push(queue);
+                this.writeMessage('queues', name);
+            }
+        }
+        return queue;
     }
 
     public pushMessageToQueue(name: string, message: string) {
@@ -27,8 +41,20 @@ export class QueuePersistance {
         if (queue) {
             this.writeMessage(name, message);
             queue.messages.push(message);
+            console.log(queue.messages);
         }
     }
+
+    public getMessageFromQueue(name: string) {
+        const queue = this.getQueueByName(name);
+        if (queue) {
+            const message = queue.messages[0];
+            const file = fs.createReadStream(name, { flags: 'r+' });
+            //delete from file
+            console.log(`${queue.messages.shift()} was requested and removed`);
+        }
+    }
+
 
     private createQueueDefinitionArray() {
         console.log('...loading queue definition');
