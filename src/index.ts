@@ -13,7 +13,7 @@ let queues: QueuePersistence = new QueuePersistence();
 function endpoint(req: http.IncomingMessage, res: http.ServerResponse) {
     if (req.method === 'GET' && req.url) {
         const queryData = (url.parse(req.url, true).query) as unknown as Incoming;
-        if (queryData.name && queryData.priority && queryData.message) {
+        if (queryData.name && queryData.message) {
             queues.pushMessageToQueue(queryData.name, queryData.message);
             res.end('OK');
         } else if (queryData.name) {

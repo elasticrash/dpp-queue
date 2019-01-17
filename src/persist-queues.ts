@@ -26,8 +26,7 @@ export class QueuePersistence {
             if (body) {
                 queue = {
                     name: name,
-                    messages: [],
-                    timestamp: Date.now()
+                    messages: []
                 }
                 this._queuePersistance.push(queue);
                 this.writeMessage('queues', name);
@@ -49,9 +48,11 @@ export class QueuePersistence {
         const queue = this.getQueueByName(name);
         if (queue) {
             const message = queue.messages[0];
-            const file = fs.createReadStream(name, { flags: 'r+' });
-            //delete from file
-            console.log(`${queue.messages.shift()} was requested and removed`);
+            const stat = fs.statSync(name);
+            fs.truncateSync(name, stat.size - message.length - 2);
+            const response = queue.messages.shift();
+            console.log(`${response} was requested and removed`);
+            return response;
         }
     }
 
@@ -76,8 +77,7 @@ export class QueuePersistence {
                 if (body) {
                     this._queuePersistance.push({
                         name: def,
-                        messages: body.toString('utf8').split('\r\n'),
-                        timestamp: Date.now()
+                        messages: body.toString('utf8').split('\r\n').reverse()
                     });
                 } else {
                     console.log('...loading queue persistance failed');
@@ -106,6 +106,11 @@ export class QueuePersistence {
     }
 
     private writeMessage(filename: string, message: string) {
-        fs.appendFileSync(filename, `${message}\r\n`);
+        const fd = fs.openSync(filename, 'r+');
+        const data = fs.readFileSync(filename);
+        const buffer: Buffer = Buffer.from(`${message}\r\n`);
+        fs.writeSync(fd, buffer, 0, buffer.length, 0);
+        fs.writeSync(fd, data, 0, data.length, buffer.length);
+        fs.closeSync(fd);
     }
 }
