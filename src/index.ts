@@ -1,6 +1,6 @@
 import * as http from 'http';
 import * as url from 'url';
-import { Incoming } from './incoming.model';
+import { Incoming } from './incoming.interface';
 import { QueuePersistence } from './persist-queues';
 
 let queues: QueuePersistence = new QueuePersistence();
@@ -19,8 +19,7 @@ function endpoint(req: http.IncomingMessage, res: http.ServerResponse) {
         } else if (queryData.name) {
             const message = queues.getMessageFromQueue(queryData.name);
             res.end(message);
-        }
-        else {
+        } else {
             res.end('query parameters are not correct');
         }
     }

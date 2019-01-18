@@ -11,14 +11,6 @@ export class QueuePersistence {
         this.createQueuePersistance();
     }
 
-    public set queueDefinition(queues: string[]) {
-        this._queueDefinitions = queues;
-    }
-
-    public get queueDefinition() {
-        return this._queueDefinitions;
-    }
-
     private getQueueByName(name: string): QueueStructure | undefined {
         let queue = this._queuePersistance.find(x => x.name === name);
         if (!queue) {
@@ -61,7 +53,7 @@ export class QueuePersistence {
         console.log('...loading queue definition');
         const body = this.readFile('queues');
         if (body) {
-            this.queueDefinition = body.toString('utf8').split('\r\n');
+            this._queueDefinitions = body.toString('utf8').split('\r\n');
             console.log('...loading queue definition complete');
         } else {
             console.log('...loading queue definition failed');
