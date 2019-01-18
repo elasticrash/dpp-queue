@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as stream from 'stream';
 import { QueueStructure } from './queue-structure.interface';
 
 export class QueuePersistence {
@@ -19,9 +18,9 @@ export class QueuePersistence {
                 queue = {
                     name: name,
                     messages: []
-                }
+                };
                 this._queuePersistance.push(queue);
-                this.writeMessage('queues', name);
+                this.addToTop('queues', name);
             }
         }
         return queue;
@@ -30,7 +29,7 @@ export class QueuePersistence {
     public pushMessageToQueue(name: string, message: string) {
         const queue = this.getQueueByName(name);
         if (queue) {
-            this.writeMessage(name, message);
+            this.addToTop(name, message);
             queue.messages.push(message);
             console.log(queue.messages);
         }
@@ -97,7 +96,7 @@ export class QueuePersistence {
         }
     }
 
-    private writeMessage(filename: string, message: string) {
+    private addToTop(filename: string, message: string) {
         const fd = fs.openSync(filename, 'r+');
         const data = fs.readFileSync(filename);
         const buffer: Buffer = Buffer.from(`${message}\r\n`);
